@@ -2633,6 +2633,8 @@ ParseVarDecl:
 
             if (buildAST)
             {
+                AnalysisAssert(pnode != nullptr);
+
                 IdentPtr exportName = wellKnownPropertyPids.default;
                 IdentPtr localName;
 
