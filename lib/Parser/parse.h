@@ -399,7 +399,9 @@ private:
         IdentPtr target; // m_pidTarget;
         IdentPtr from; // m_pidFrom;
         IdentPtr as; // m_pidAs;
-        IdentPtr default; // m_pidDefault
+        IdentPtr default; // m_pidDefault;
+        IdentPtr _star; // m_pidStar; // '*' identifier
+        IdentPtr _starDefaultStar; // m_pidStarDefaultStar; // '*default*' identifier
     };
 
     WellKnownPropertyPids wellKnownPropertyPids;

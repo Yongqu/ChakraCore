@@ -2361,7 +2361,7 @@ void Parser::ParseImportClause(ModuleImportEntryList* importEntryList, bool pars
         if (buildAST)
         {
             IdentPtr localName = m_token.GetIdentifier(m_phtbl);
-            IdentPtr importName = CreatePid(L"*", 1);
+            IdentPtr importName = wellKnownPropertyPids._star;
             ParseNodePtr declNode = CreateModuleImportDeclNode(localName);
 
             AddModuleImportEntry(importEntryList, importName, localName, nullptr, declNode);
@@ -2649,7 +2649,7 @@ ParseVarDecl:
                 else
                 {
                     // Consider: Is this observable? Can we get away with leaving localName null in this case?
-                    localName = CreatePid(L"*default*", sizeof("*default*") -1);
+                    localName = wellKnownPropertyPids._starDefaultStar;
                 }
 
                 AddModuleExportEntry(EnsureModuleLocalExportEntryList(), nullptr, localName, exportName, nullptr);
@@ -10496,6 +10496,8 @@ void Parser::InitPids()
     wellKnownPropertyPids.as = m_phtbl->PidHashNameLen(L"as", sizeof("as") - 1);
     wellKnownPropertyPids.from = m_phtbl->PidHashNameLen(L"from", sizeof("from") - 1);
     wellKnownPropertyPids.default = m_phtbl->PidHashNameLen(L"default", sizeof("default") - 1);
+    wellKnownPropertyPids._starDefaultStar = m_phtbl->PidHashNameLen(L"*default*", sizeof("*default*") - 1);
+    wellKnownPropertyPids._star = m_phtbl->PidHashNameLen(L"*", sizeof("*") - 1);
 }
 
 void Parser::RestoreScopeInfo(Js::FunctionBody* functionBody)

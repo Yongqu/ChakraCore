@@ -48,6 +48,10 @@ var tests = [
             assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement11.js', 'samethread'); }); // Syntax error if export statement is in try catch statement
             assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement12.js', 'samethread'); }); // Syntax error if export statement is in any block
             assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement13.js', 'samethread'); }); // Export default takes an assignment expression which doesn't allow comma expressions
+            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement14.js', 'samethread'); }); // Syntax error if export is followed by non-identifier
+            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement15.js', 'samethread'); }); // Syntax error if export is followed by string constant
+            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement16.js', 'samethread'); }); // Syntax error if export is followed by EOF
+            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement17.js', 'samethread'); }); // Syntax error in named export clause if trying to export as numeric constant
         }
     },
     {
