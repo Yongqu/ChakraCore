@@ -7,6 +7,29 @@
 
 WScript.LoadScriptFile("..\\UnitTestFramework\\UnitTestFramework.js");
 
+function testModuleScript(source, message, shouldFail) {
+    let testfunc = () => WScript.LoadModule(source, 'samethread');
+    
+    if (shouldFail) {
+        let caught = false;
+        
+        // We can't use assert.throws here because the SyntaxError used to construct the thrown error
+        // is from a different context so it won't be strictly equal to our SyntaxError.
+        try {
+            testfunc();
+        } catch(e) {
+            caught = true;
+            
+            // Compare toString output of SyntaxError and other context SyntaxError constructor.
+            assert.areEqual(e.constructor.toString(), SyntaxError.toString(), message);
+        }
+        
+        assert.isTrue(caught, `Expected error not thrown: ${message}`);
+    } else {
+        assert.doesNotThrow(testfunc, message);
+    }
+}
+
 var tests = [
     {
         name: "All valid (non-default) export statements",
@@ -17,41 +40,41 @@ var tests = [
     {
         name: "Valid default export statements",
         body: function () {
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement1.js', 'samethread'); }, "Unnamed function expression default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement2.js', 'samethread'); }, "Named function expression default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement3.js', 'samethread'); }, "Unnamed generator function expression default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement4.js', 'samethread'); }, "Named generator function expression default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement5.js', 'samethread'); }, "Unnamed class expression default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement6.js', 'samethread'); }, "Named class default expression export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement7.js', 'samethread'); }, "Primitive type default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement8.js', 'samethread'); }, "Variable in assignment expression default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement9.js', 'samethread'); }, "Lambda expression as default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement10.js', 'samethread'); }, "Named function statement default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement11.js', 'samethread'); }, "Named generator function statement default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement12.js', 'samethread'); }, "Named class statement default export");
-            assert.doesNotThrow(function () { WScript.LoadModuleFile('.\\module\\ValidExportDefaultStatement13.js', 'samethread'); }, "Default export of an object");
+            testModuleScript('export default function () { };', 'Unnamed function expression default export');
+            testModuleScript('export default function fn2 () { }', 'Named function expression default export');
+            testModuleScript('export default function* () { };', 'Unnamed generator function expression default export');
+            testModuleScript('export default function* gn2 () { }', 'Named generator function expression default export');
+            testModuleScript('export default class { };', 'Unnamed class expression default export');
+            testModuleScript('export default class cl2 { }', 'Named class default expression export');
+            testModuleScript('export default 1;', 'Primitive type default export');
+            testModuleScript('var a; export default a = 10;', 'Variable in assignment expression default export');
+            testModuleScript('export default () => 3', 'Simple default lambda expression export statement');
+            testModuleScript('function foo() { }; export default foo', 'Named function statement default export');
+            testModuleScript('function* g() { }; export default g', 'Named generator function statement default export');
+            testModuleScript('class c { }; export default c', 'Named class statement default export');
+            testModuleScript("var _ = { method: function() { return 'method_result'; }, method2: function() { return 'method2_result'; } }; export default _", 'Export object with methods - framework model');
         }
     },
     {
         name: "Syntax error export statements",
         body: function () {
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement1.js', 'samethread'); }); // Syntax error if const decl is missing initializer
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement2.js', 'samethread'); }); // Syntax error if we're trying to export an identifier without default or curly braces
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement3.js', 'samethread'); }); // Syntax error if function declaration is missing binding identifier
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement4.js', 'samethread'); }); // Syntax error if generator declaration is missing binding identifier
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement5.js', 'samethread'); }); // Syntax error if class declaration is missing binding identifier
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement6.js', 'samethread'); }); // Syntax error if we use brackets instead of curly braces in export statement
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement7.js', 'samethread'); }); // Syntax error if export statement is in a nested function
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement8.js', 'samethread'); }); // Syntax error if export statement is in eval
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement9.js', 'samethread'); }); // Syntax error if named export list contains an empty element
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement10.js', 'samethread'); }); // Syntax error if export statement is in arrow function
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement11.js', 'samethread'); }); // Syntax error if export statement is in try catch statement
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement12.js', 'samethread'); }); // Syntax error if export statement is in any block
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement13.js', 'samethread'); }); // Export default takes an assignment expression which doesn't allow comma expressions
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement14.js', 'samethread'); }); // Syntax error if export is followed by non-identifier
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement15.js', 'samethread'); }); // Syntax error if export is followed by string constant
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement16.js', 'samethread'); }); // Syntax error if export is followed by EOF
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorExportStatement17.js', 'samethread'); }); // Syntax error in named export clause if trying to export as numeric constant
+            testModuleScript('export const const1;', 'Syntax error if const decl is missing initializer', true);
+            testModuleScript('function foo() { }; export foo;', "Syntax error if we're trying to export an identifier without default or curly braces", true);
+            testModuleScript('export function () { }', 'Syntax error if function declaration is missing binding identifier', true);
+            testModuleScript('export function* () { }', 'Syntax error if generator declaration is missing binding identifier', true);
+            testModuleScript('export class { }', 'Syntax error if class declaration is missing binding identifier', true);
+            testModuleScript('function foo() { }; export [ foo ];', 'Syntax error if we use brackets instead of curly braces in export statement', true);
+            testModuleScript('function foo() { export default function() { } }', 'Syntax error if export statement is in a nested function', true);
+            testModuleScript("eval('export default function() { }');", 'Syntax error if export statement is in eval', true);
+            testModuleScript('function foo() { }; export { , foo };', 'Syntax error if named export list contains an empty element', true);
+            testModuleScript('function foo() { }; () => { export { foo }; }', 'Syntax error if export statement is in arrow function', true);
+            testModuleScript('function foo() { }; try { export { foo }; } catch(e) { }', 'Syntax error if export statement is in try catch statement', true);
+            testModuleScript('function foo() { }; { export { foo }; }', 'Syntax error if export statement is in any block', true);
+            testModuleScript('export default 1, 2, 3;', "Export default takes an assignment expression which doesn't allow comma expressions", true);
+            testModuleScript('export 12;', 'Syntax error if export is followed by non-identifier', true);
+            testModuleScript("export 'string_constant';", 'Syntax error if export is followed by string constant', true);
+            testModuleScript('export ', 'Syntax error if export is followed by EOF', true);
+            testModuleScript('function foo() { }; export { foo as 100 };', 'Syntax error in named export clause if trying to export as numeric constant', true);
         }
     },
     {
@@ -63,42 +86,42 @@ var tests = [
     {
         name: "Syntax error import statements",
         body: function () {
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement1.js', 'samethread'); }); // Syntax error if import statement is in eval
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement2.js', 'samethread'); }); // Syntax error if import statement is in nested function
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement3.js', 'samethread'); }); // Syntax error if import statement has multiple default bindings
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement4.js', 'samethread'); }); // Syntax error if import statement is missing from clause
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement5.js', 'samethread'); }); // Syntax error if import statement has comma after namespace import
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement6.js', 'samethread'); }); // Syntax error if import statement has default binding after namespace import
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement7.js', 'samethread'); }); // Syntax error if import statement has named import list after namespace import
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement8.js', 'samethread'); }); // Syntax error if import statement has comma after named import list
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement9.js', 'samethread'); }); // Syntax error if import statement has default binding after named import list
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement10.js', 'samethread'); }); // Syntax error if import statement has namespace import after named import list
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement11.js', 'samethread'); }); // Syntax error if import statement is missing from clause
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement12.js', 'samethread'); }); // Syntax error if named import clause uses brackets
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement13.js', 'samethread'); }); // Syntax error if namespace import is missing 'as' keyword
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement14.js', 'samethread'); }); // Syntax error if namespace imported binding name is not identifier
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement15.js', 'samethread'); }); // Syntax error if named import list contains an empty element
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement16.js', 'samethread'); }); // Imported default bindings are constant bindings
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement17.js', 'samethread'); }); // Default import cannot be bound to the same symbol
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement18.js', 'samethread'); }); // Imported named bindings are constant bindings
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement19.js', 'samethread'); }); // Multiple named imports cannot be bound to the same symbol
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement20.js', 'samethread'); }); // Namespace import bindings are constant bindings
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement21.js', 'samethread'); }); // Multiple namespace imports cannot be bound to the same symbol
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement22.js', 'samethread'); }); // Renamed import bindings are constant bindings
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement23.js', 'samethread'); }); // Named import clause may not contain multiple binding identifiers with the same name
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement24.js', 'samethread'); }); // Imported bindings cannot be overwritten by later imports
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement25.js', 'samethread'); }); // Syntax error if import statement is in arrow function
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement26.js', 'samethread'); }); // Syntax error if import statement is in try catch statement
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement27.js', 'samethread'); }); // Syntax error if import statement is in any block
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement28.js', 'samethread'); }); // Named import clause which has EOF after left curly
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement29.js', 'samethread'); }); // Named import clause which has EOF after identifier
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement30.js', 'samethread'); }); // Named import clause which has EOF after identifier as
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement31.js', 'samethread'); }); // Named import clause which has EOF after identifier as identifier
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement32.js', 'samethread'); }); // Named import clause which has EOF after identifier as identifier comma
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement33.js', 'samethread'); }); // Named import clause which has non-identifier token as the first token
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement34.js', 'samethread'); }); // Named import clause missing 'as' token
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement35.js', 'samethread'); }); // Named import clause with non-identifier token after 'as'
-            assert.throws(function () { WScript.LoadModuleFile('.\\module\\SyntaxErrorImportStatement36.js', 'samethread'); }); // Named import clause with too many trailing commas
+            testModuleScript(`eval('import foo from "ValidExportStatements.js";');`, 'Syntax error if import statement is in eval', true);
+            testModuleScript('function foo() { import foo from "ValidExportStatements.js"; }', 'Syntax error if import statement is in nested function', true);
+            testModuleScript('import foo, bar from "ValidExportStatements.js";', 'Syntax error if import statement has multiple default bindings', true);
+            testModuleScript('import foo;', 'Syntax error if import statement is missing from clause', true);
+            testModuleScript('import * as foo, from "ValidExportStatements.js";', 'Syntax error if import statement has comma after namespace import', true);
+            testModuleScript('import * as foo, bar from "ValidExportStatements.js";', 'Syntax error if import statement has default binding after namespace import', true);
+            testModuleScript('import * as foo, { bar } from "ValidExportStatements.js";', 'Syntax error if import statement has named import list after namespace import', true);
+            testModuleScript('import { foo }, from "ValidExportStatements.js";', 'Syntax error if import statement has comma after named import list', true);
+            testModuleScript('import { foo }, bar from "ValidExportStatements.js";', 'Syntax error if import statement has default binding after named import list', true);
+            testModuleScript('import { foo }, * as ns1 from "ValidExportStatements.js";', 'Syntax error if import statement has namespace import after named import list', true);
+            testModuleScript('import { foo }', 'Syntax error if import statement is missing from clause', true);
+            testModuleScript('import [ foo ] from "ValidExportStatements.js";', 'Syntax error if named import clause uses brackets', true);
+            testModuleScript('import * foo from "ValidExportStatements.js";', 'Syntax error if namespace import is missing "as" keyword', true);
+            testModuleScript('import * as "foo" from "ValidExportStatements.js";', 'Syntax error if namespace imported binding name is not identifier', true);
+            testModuleScript('import { , foo } from "ValidExportStatements.js";', 'Syntax error if named import list contains an empty element', true);
+            testModuleScript('import foo from "ValidExportStatements.js"; foo = 12;', 'Imported default bindings are constant bindings', true);
+            testModuleScript('import foo from "ValidExportStatements.js"; import foo from "ValidExportStatements.js";', 'Default import cannot be bound to the same symbol', true);
+            testModuleScript('import { foo } from "ValidExportStatements.js"; foo = 12;', 'Imported named bindings are constant bindings', true);
+            testModuleScript('import { foo } from "ValidExportStatements.js"; import { foo } from "ValidExportStatements.js";', 'Multiple named imports cannot be bound to the same symbol', true);
+            testModuleScript('import * as foo from "ValidExportStatements.js"; foo = 12;', 'Namespace import bindings are constant bindings', true);
+            testModuleScript('import * as foo from "ValidExportStatements.js"; import * as foo from "ValidExportStatements.js";', 'Multiple namespace imports cannot be bound to the same symbol', true);
+            testModuleScript('import { foo as foo22 } from "ValidExportStatements.js"; foo22 = 12;', 'Renamed import bindings are constant bindings', true);
+            testModuleScript('import { foo as bar, bar } from "ValidExportStatements.js";', 'Named import clause may not contain multiple binding identifiers with the same name', true);
+            testModuleScript('import foo from "ValidExportStatements.js"; import * as foo from "ValidExportStatements.js";', 'Imported bindings cannot be overwritten by later imports', true);
+            testModuleScript('() => { import arrow from ""; }', 'Syntax error if import statement is in arrow function', true);
+            testModuleScript('try { import _try from ""; } catch(e) { }', 'Syntax error if import statement is in try catch statement', true);
+            testModuleScript('{ import in_block from ""; }', 'Syntax error if import statement is in any block', true);
+            testModuleScript('import {', 'Named import clause which has EOF after left curly', true);
+            testModuleScript('import { foo', 'Named import clause which has EOF after identifier', true);
+            testModuleScript('import { foo as ', 'Named import clause which has EOF after identifier as', true);
+            testModuleScript('import { foo as bar ', 'Named import clause which has EOF after identifier as identifier', true);
+            testModuleScript('import { foo as bar, ', 'Named import clause which has EOF after identifier as identifier comma', true);
+            testModuleScript('import { switch } from "module";', 'Named import clause which has non-identifier token as the first token', true);
+            testModuleScript('import { foo bar } from "module";', 'Named import clause missing "as" token', true);
+            testModuleScript('import { foo as switch } from "module";', 'Named import clause with non-identifier token after "as"', true);
+            testModuleScript('import { foo, , } from "module";', 'Named import clause with too many trailing commas', true);
         }
     },
     {

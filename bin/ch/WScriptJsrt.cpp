@@ -162,6 +162,16 @@ Error:
 
 JsValueRef __stdcall WScriptJsrt::LoadScriptCallback(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState)
 {
+    return LoadScriptHelper(callee, isConstructCall, arguments, argumentCount, callbackState, false);
+}
+
+JsValueRef __stdcall WScriptJsrt::LoadModuleCallback(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState)
+{
+    return LoadScriptHelper(callee, isConstructCall, arguments, argumentCount, callbackState, true);
+}
+
+JsValueRef WScriptJsrt::LoadScriptHelper(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState, bool isSourceModule)
+{
     HRESULT hr = E_FAIL;
     JsErrorCode errorCode = JsNoError;
     LPCWSTR errorMessage = L"";
@@ -194,7 +204,7 @@ JsValueRef __stdcall WScriptJsrt::LoadScriptCallback(JsValueRef callee, bool isC
         {
             IfJsrtErrorSetGo(ChakraRTInterface::JsStringToPointer(arguments[3], &fileName, &fileNameLength));
         }
-        returnValue = LoadScript(callee, fileName, fileNameLength, fileContent, scriptInjectType, false);
+        returnValue = LoadScript(callee, fileName, fileNameLength, fileContent, scriptInjectType, isSourceModule);
     }
 
 Error:
@@ -474,6 +484,13 @@ bool WScriptJsrt::Initialize()
     IfJsrtErrorFail(ChakraRTInterface::JsGetPropertyIdFromName(loadScriptString, &loadScriptName), false);
     CreateNamedFunction(loadScriptString, LoadScriptCallback, &loadScript);
     IfJsrtErrorFail(ChakraRTInterface::JsSetProperty(wscript, loadScriptName, loadScript, true), false);
+
+    JsValueRef loadModule;
+    JsPropertyIdRef loadModuleName;
+    const wchar_t* loadModuleString = L"LoadModule";
+    IfJsrtErrorFail(ChakraRTInterface::JsGetPropertyIdFromName(loadModuleString, &loadModuleName), false);
+    CreateNamedFunction(loadModuleString, LoadModuleCallback, &loadModule);
+    IfJsrtErrorFail(ChakraRTInterface::JsSetProperty(wscript, loadModuleName, loadModule, true), false);
 
     JsValueRef setTimeout;
     JsPropertyIdRef setTimeoutName;

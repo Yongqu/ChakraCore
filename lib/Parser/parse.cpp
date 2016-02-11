@@ -2267,12 +2267,7 @@ ModuleExportEntryList* Parser::EnsureModuleStarExportEntryList()
 
 void Parser::AddModuleImportEntry(ModuleImportEntryList* importEntryList, IdentPtr importName, IdentPtr localName, IdentPtr moduleRequest, ParseNodePtr declNode)
 {
-     ModuleImportEntry* importEntry = Anew(&m_nodeAllocator, ModuleImportEntry);
-
-    if (importEntry == nullptr)
-    {
-        OutOfMemory();
-    }
+    ModuleImportEntry* importEntry = Anew(&m_nodeAllocator, ModuleImportEntry);
 
     importEntry->importName = importName;
     importEntry->localName = localName;
@@ -2285,11 +2280,6 @@ void Parser::AddModuleImportEntry(ModuleImportEntryList* importEntryList, IdentP
 void Parser::AddModuleExportEntry(ModuleExportEntryList* exportEntryList, IdentPtr importName, IdentPtr localName, IdentPtr exportName, IdentPtr moduleRequest)
 {
     ModuleExportEntry* exportEntry = Anew(&m_nodeAllocator, ModuleExportEntry);
-
-    if (exportEntry == nullptr)
-    {
-        OutOfMemory();
-    }
 
     exportEntry->importName = importName;
     exportEntry->localName = localName;
@@ -8523,7 +8513,7 @@ ParseNodePtr Parser::ParseVariableDeclaration(
     ulong     nameHintLength = 0;
     ulong     nameHintOffset = 0;
     Assert(declarationType == tkVAR || declarationType == tkCONST || declarationType == tkLET);
-    
+
     for (;;)
     {
         if (IsES6DestructuringEnabled() && IsPossiblePatternStart())
